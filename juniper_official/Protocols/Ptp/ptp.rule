@@ -88,19 +88,29 @@ iceberg {
                 type float;
                 description "Time offset information of a slave clock with respect to its master clock. Precision of this time offset is 1 nanosecond.";
             }
-            variable phase-offset-high-threshold {
-                value 1.0;
-                description "High Threshold check for the Phase Offset value";
+            variable phase-offset-major-upper-threshold {
+                value 0.0000005;
+                description "Upper Threshold check for the Phase Offset value, major alert";
                 type float;
             }
-            variable phase-offset-low-threshold {
-                value -0.000000016;
-                description "Low Threshold check for the Phase Offset value";
+            variable phase-offset-major-lower-threshold {
+                value -0.0000005;
+                description "Lower Threshold check for the Phase Offset value, major alert";
+                type float;
+            }
+            variable phase-offset-minor-upper-threshold {
+                value 0.00000025;
+                description "Upper Threshold check for the Phase Offset value, minor alert";
+                type float;
+            }
+            variable phase-offset-minor-lower-threshold {
+                value -0.00000025;
+                description "Lower Threshold check for the Phase Offset value, minor alert";
                 type float;
             }
             trigger ptp-phase-offset {
                 synopsis "Alert if Phase Offset is significant";
-                description "Raise an issue if Phase Offset is beyond the prefined thresholds";
+                description "Raise an issue if Phase Offset is beyond the predefined thresholds";
                 term is-lock-status-invalid {
                     when {
                         not-equal-to "$lock-status" 5;
@@ -112,24 +122,35 @@ iceberg {
                         }
                     }
                 }
-                term is-phase-offset-invalid-range {
+                term is-phase-offset-major-invalid-range {
                     when {
-                        greater-than-or-equal-to "$phase-offset" "$phase-offset-low-threshold";
-                        less-than-or-equal-to "$phase-offset" "$phase-offset-high-threshold";
+                        less-than "$phase-offset" "$phase-offset-major-lower-threshold";
+                        greater-than "$phase-offset" "$phase-offset-major-upper-threshold";
                     }
                     then {
                         status {
-                            color green;
-                            message "Phase offset is outside of the valid range $phase-offset-low-threshold - $phase-offset-high-threshold";
+                            color red;
+                            message "Phase offset $phase-offset is outside of the valid range $phase-offset-major-lower-threshold - $phase-offset-major-upper-threshold";
                         }
-                        next;
+                    }
+                }
+                term is-phase-offset-minor-invalid-range {
+                    when {
+                        less-than "$phase-offset" "$phase-offset-minor-lower-threshold";
+                        greater-than "$phase-offset" "$phase-offset-minor-upper-threshold";
+                    }
+                    then {
+                        status {
+                            color yellow;
+                            message "Phase offset $phase-offset is outside of the valid range $phase-offset-minor-lower-threshold - $phase-offset-minor-upper-threshold";
+                        }
                     }
                 }
                 term phase-offset-invalid-range {
                     then {
                         status {
-                            color red;
-                            message "Phase offset is not in the valid range $phase-offset-low-threshold - $phase-offset-high-threshold";
+                            color green;
+                            message "Phase offset $phase-offset is in the valid range $phase-offset-low-threshold - $phase-offset-high-threshold";
                         }
                     }
                 }
