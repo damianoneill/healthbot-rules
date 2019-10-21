@@ -12,4 +12,4 @@ jobs:
       - name: yaml-lint
         uses: ibiqlik/action-yamllint@master
         with:
-          file_or_dir: ./**/*.yml
+          file_or_dir: .
