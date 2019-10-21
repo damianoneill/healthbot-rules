@@ -1,0 +1,143 @@
+/*
+* Detects Precision Time Protocol (PTP) clock issues.
+*/
+iceberg {
+    topic protocol.ptp {
+        description "Monitors Precision Time Protocol (PTP) Slave Clock State for misalignment, phase offset and clock class issues";
+        synopsis "Precision Time Protocol (PTP) Slave Clock State";
+        rule ptp-lock-status {
+            synopsis "Lock Status of the PTP Slave";
+            description "Display detailed information about the lock status of the slave";
+            sensor ptp-lock-status {
+                synopsis "iAgent PTP Sensor";
+                description "An iAgent based Sensor, using the ptp-lock-status.yml configuration file";
+                iAgent {
+                    file ptp-lock-status.yml;
+                    table PtpLockStatusTable;
+                    frequency 60s;
+                }
+            }
+            field lock-status {
+                sensor ptp-lock-status {
+                    path lockState;
+                }
+                type integer;
+                description "State of the slave clock with respect to its master clock";
+            }
+            trigger ptp-lock-status {
+                synopsis "Alert if Slave Clock is not Phase Aligned";
+                description "Indicate as Red if the Slave Clock state is Free-run, Initialized, Acquiring or Freq locked";
+                term is-lock-status-invalid {
+                    when {
+                        not-equal-to "$lock-status" 5;
+                    }
+                    then {
+                        status {
+                            color red;
+                            message "Slave Clock is not Phase Aligned with the Master Clock";
+                        }
+                    }
+                }
+                term is-lock-status-valid {
+                    when {
+                        equal-to "$lock-status" 5;
+                    }
+                    then {
+                        status {
+                            color green;
+                            message "Slave Clock is Phase Aligned with Master Clock";
+                        }
+                    }
+                }
+            }
+        }
+        rule ptp-phase-offset {
+            synopsis "Time offset information";
+            description "Offset information of a slave clock with respect to its master clock";
+            function Phase-Offset-to-Float {
+                description "This function converts a ptp-spll-phase-offset string with some text to a float";
+                path phase-offset-to-float.py;
+                method string_to_float;
+                argument phase-offset-string {
+                    mandatory;
+                }
+            }
+            sensor ptp-lock-status {
+                synopsis "iAgent PTP Sensor";
+                description "An iAgent based Sensor, using the ptp-lock-status.yml configuration file";
+                iAgent {
+                    file ptp-lock-status.yml;
+                    table PtpLockStatusTable;
+                    frequency 60s;
+                }
+            }
+            field phase-offset-string {
+                sensor ptp-lock-status {
+                    path phaseOffset;
+                }
+                type string;
+                description "Time offset information of a slave clock with respect to its master clock. Precision of this time offset is 1 nanosecond.  Note this requires reformatting using the string_to_float function";
+            }
+            field phase-offset {
+                formula {
+                    user-defined-function {
+                        function-name Phase-Offset-to-Float;
+                        argument phase-offset-string "$phase-offset-string";
+                    }
+                }
+                type float;
+                description "Time offset information of a slave clock with respect to its master clock. Precision of this time offset is 1 nanosecond.";
+            }
+            variable phase-offset-high-threshold {
+                value 1.0;
+                description "High Threshold check for the Phase Offset value";
+                type float;
+            }
+            variable phase-offset-low-threshold {
+                value -0.000000016;
+                description "Low Threshold check for the Phase Offset value";
+                type float;
+            }
+            trigger ptp-phase-offset {
+                synopsis "Alert if Phase Offset is significant";
+                description "Raise an issue if Phase Offset is beyond the prefined thresholds";
+                term is-lock-status-invalid {
+                    when {
+                        not-equal-to "$lock-status" 5;
+                    }
+                    then {
+                        status {
+                            color red;
+                            message "Slave Clock is not Phase Aligned with the Master Clock, State value is $lock-status";
+                        }
+                    }
+                }
+                term is-phase-offset-invalid-range {
+                    when {
+                        greater-than-or-equal-to "$phase-offset" "$phase-offset-low-threshold";
+                        less-than-or-equal-to "$phase-offset" "$phase-offset-high-threshold";
+                    }
+                    then {
+                        status {
+                            color green;
+                            message "Phase offset is outside of the valid range $phase-offset-low-threshold - $phase-offset-high-threshold";
+                        }
+                        next;
+                    }
+                }
+                term phase-offset-invalid-range {
+                    then {
+                        status {
+                            color red;
+                            message "Phase offset is not in the valid range $phase-offset-low-threshold - $phase-offset-high-threshold";
+                        }
+                    }
+                }
+            }
+        }
+        rule ptp-clock-class {
+            synopsis "Clock class configuration for ESMC quality level";
+            description "Ensure that the Clock Class satisfies a minimum requirement";
+        }
+    }
+}

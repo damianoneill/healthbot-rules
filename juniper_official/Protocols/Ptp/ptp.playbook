@@ -1,0 +1,11 @@
+/*
+ * Playbook contains multiple rules which check the state of a PTP Clock
+ * and notifies when anomalies are found.
+ */
+iceberg {
+    playbook ptp-playbook {
+        rules [protocol.ptp/ptp-lock-status protocol.ptp/ptp-phase-offset];
+        description "Precision Time Protocol (PTP) enable routers and switches to deliver synchronization services";
+        synopsis "Precision Time Protocol (PTP) monitoring";
+    }
+}

@@ -1,0 +1,10 @@
+PtpLockStatusTable:
+  rpc: get-ptp-lock-status
+  item: .
+  key: ptp-spll-lock-state
+  view: PtpLockStatusView
+
+PtpLockStatusView:
+  fields:
+    lockState: ptp-spll-lock-state
+    phaseOffset: ptp-spll-phase-offset
