@@ -34,7 +34,7 @@ iceberg {
                     then {
                         status {
                             color red;
-                            message "Slave Clock is not Phase Aligned with the Master Clock";
+                            message "Slave Clock is not Phase Aligned with the Master Clock - $lock-status";
                         }
                     }
                 }
@@ -58,7 +58,7 @@ iceberg {
                 description "This function converts a ptp-spll-phase-offset string with some text to a float";
                 path phase-offset-to-float.py;
                 method string_to_float;
-                argument phase-offset-string {
+                argument phase_offset {
                     mandatory;
                 }
             }
@@ -82,28 +82,52 @@ iceberg {
                 formula {
                     user-defined-function {
                         function-name Phase-Offset-to-Float;
-                        argument phase-offset-string "$phase-offset-string";
+                        argument phase_offset "$phase-offset-string";
                     }
                 }
                 type float;
                 description "Time offset information of a slave clock with respect to its master clock. Precision of this time offset is 1 nanosecond.";
             }
-            variable phase-offset-major-upper-threshold {
+            field c-phase-offset-major-upper-threshold {
+                constant {
+                    value "{{v-phase-offset-major-upper-threshold}}";
+                }
+                type float;
+            }
+            field c-phase-offset-major-lower-threshold {
+                constant {
+                    value "{{v-phase-offset-major-lower-threshold}}";
+                }
+                type float;
+            }
+            field c-phase-offset-minor-upper-threshold {
+                constant {
+                    value "{{v-phase-offset-minor-upper-threshold}}";
+                }
+                type float;
+            }
+            field c-phase-offset-minor-lower-threshold {
+                constant {
+                    value "{{v-phase-offset-minor-lower-threshold}}";
+                }
+                type float;
+            }
+            variable v-phase-offset-major-upper-threshold {
                 value 0.0000005;
                 description "Upper Threshold check for the Phase Offset value, major alert";
                 type float;
             }
-            variable phase-offset-major-lower-threshold {
+            variable v-phase-offset-major-lower-threshold {
                 value -0.0000005;
                 description "Lower Threshold check for the Phase Offset value, major alert";
                 type float;
             }
-            variable phase-offset-minor-upper-threshold {
+            variable v-phase-offset-minor-upper-threshold {
                 value 0.00000025;
                 description "Upper Threshold check for the Phase Offset value, minor alert";
                 type float;
             }
-            variable phase-offset-minor-lower-threshold {
+            variable v-phase-offset-minor-lower-threshold {
                 value -0.00000025;
                 description "Lower Threshold check for the Phase Offset value, minor alert";
                 type float;
@@ -124,25 +148,25 @@ iceberg {
                 }
                 term is-phase-offset-major-invalid-range {
                     when {
-                        less-than "$phase-offset" "$phase-offset-major-lower-threshold";
-                        greater-than "$phase-offset" "$phase-offset-major-upper-threshold";
+                        less-than "$phase-offset" "$c-phase-offset-major-lower-threshold";
+                        greater-than "$phase-offset" "$c-phase-offset-major-upper-threshold";
                     }
                     then {
                         status {
                             color red;
-                            message "Phase offset $phase-offset is outside of the valid range $phase-offset-major-lower-threshold - $phase-offset-major-upper-threshold";
+                            message "Phase offset $phase-offset is outside of the valid range $c-phase-offset-major-lower-threshold to $c-phase-offset-major-upper-threshold";
                         }
                     }
                 }
                 term is-phase-offset-minor-invalid-range {
                     when {
-                        less-than "$phase-offset" "$phase-offset-minor-lower-threshold";
-                        greater-than "$phase-offset" "$phase-offset-minor-upper-threshold";
+                        less-than "$phase-offset" "$c-phase-offset-minor-lower-threshold";
+                        greater-than "$phase-offset" "$c-phase-offset-minor-upper-threshold";
                     }
                     then {
                         status {
                             color yellow;
-                            message "Phase offset $phase-offset is outside of the valid range $phase-offset-minor-lower-threshold - $phase-offset-minor-upper-threshold";
+                            message "Phase offset $phase-offset is outside of the valid range $c-phase-offset-minor-lower-threshold to $c-phase-offset-minor-upper-threshold";
                         }
                     }
                 }
@@ -150,7 +174,7 @@ iceberg {
                     then {
                         status {
                             color green;
-                            message "Phase offset $phase-offset is in the valid range $phase-offset-low-threshold - $phase-offset-high-threshold";
+                            message "Phase offset $phase-offset is in the valid range $c-phase-offset-minor-lower-threshold to $c-phase-offset-minor-upper-threshold";
                         }
                     }
                 }
